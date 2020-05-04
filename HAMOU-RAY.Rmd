@@ -1,6 +1,6 @@
 ---
 title: "Projet STA203"
-author: "Ray Loic"
+author: "Hamou Claude, Ray Loic"
 date: "25/04/2020"
 output: pdf_document
 ---
@@ -129,7 +129,7 @@ Les données **PAR_ASE_M**, **PAR_ASE_MV**, **PAR_SFM_M** et **PAR_SFM_MV** repr
 
 
 On réalise les opérations de nettoyage précédement expliquées et on note *X* le nouveau data frame de données que nous allons utiliser dans la suite.
-Et *Genre* le data-frame d'une colonne contenant la variable qualitative Genre.
+Et *Y* le vecteur contenant la variable qualitative **GENRE** en binaire, avec $Classical = 0$ et $Jazz = 1$.
 
 ```{r}
 #Colonnes que nous n'utiliserons pas dans la suite
@@ -146,12 +146,13 @@ X["PAR_ASC_V"]=log(data["PAR_ASC_V"])
 
 #
 GENRE=data[,192]
+Y=1*(GENRE=="Jazz")
 ```
 
 
 
-Nous cherchons à déterminer un modèle logistique permettant de d'estimer les valeurs de la variable *GENRE*.
-Cette variable prend deux valeurs *Classical* et *Jazz*.
+Nous cherchons à déterminer un modèle logistique permettant de d'estimer les valeurs de la variable **Y**.
+Cette variable prend deux valeurs **0** et **1**.
 
 **MODELE BERNOULLI...**
 **A ECRIRE**
@@ -160,6 +161,9 @@ Cette variable prend deux valeurs *Classical* et *Jazz*.
 
 
 ## Question 2
+
+On utilise le code proposé pour générer des data-frame de *training* permettant de fitter le modèle et des data-frame de *test*.
+
 ```{r}
 set.seed(103)
 n=nrow(data)
@@ -169,22 +173,10 @@ X_test=X[!train,]
 
 GENRE_training=GENRE[train]
 GENRE_test=GENRE[!train]
+
+Y_training=Y[train]
+Y_test=Y[!train]
 ```
-
-////// APRES CA C'EST A REVOIR 
-
-c("PAR_TC","PAR_SC", "PAR_SC_V", "PAR_ASE_M", "PAR_ASE_MV", "PAR_SFM_M", "PAR_SFM_MV")
-
-Traçons la réponse *GENRE* en fonction des différentes variables.
-
-```{r}
-ggplot()+
-  geom_point(aes(x=X_training$PAR_SFM_M ,y=GENRE_training))
-```
-
-.....
-
-
 
 
 
@@ -192,11 +184,53 @@ ggplot()+
 
 ### Mod0 
 
+```{r}
+indices=c("PAR_TC","PAR_SC", "PAR_SC_V", "PAR_ASE_M", "PAR_ASE_MV", "PAR_SFM_M", "PAR_SFM_MV")
+Mod0=glm(Y_training~.,family=binomial,data=X_training[indices])
+summary(Mod0)
+par(mfrow=c(2,2)) 
+plot(Mod0)
+Mod0.predict=predict(Mod0, newdata=X_test[indices], type="response")
+```
+
 ### ModT
+
+```{r}
+ModT=glm(Y_training~.,family=binomial,data=X_training)
+summary(ModT)
+par(mfrow=c(2,2))
+plot(ModT)
+ModT.predict=predict(ModT, newdata=X_test, type="response")
+```
 
 ### Mod1
 
+```{r}
+#Pr(>|t|)  de ModT
+ModT.p_val=coef(summary(ModT))[,4]
+#On cherche les indices de p-value < 5%
+indice_sign_5=names(which(ModT.p_val<0.05))
+#Prediction de Mod1
+Mod1=glm(Y_training~.,family=binomial,data=X_training[indice_sign_5])
+summary(Mod1)
+par(mfrow=c(2,2))
+plot(Mod1)
+ModT.predict=predict(Mod1, newdata=X_test[indice_sign_5], type="response")
+```
+
 ### Mod2 
+```{r}
+#Pr(>|t|)  de ModT
+ModT.p_val=coef(summary(ModT))[,4]
+#On cherche les indices de p-value < 20%
+indice_sign_20=names(which(ModT.p_val<0.2))[c(-1)] #car 1er element est l'intercept
+#Prediction de Mod1
+Mod2=glm(Y_training~.,family=binomial,data=X_training[indice_sign_20])
+summary(Mod2)
+par(mfrow=c(2,2))
+plot(Mod2)
+ModT.predict=predict(Mod2, newdata=X_test[indice_sign_20], type="response")
+```
 
 ### ModAIC
 
