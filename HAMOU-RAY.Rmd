@@ -372,4 +372,6 @@ lines(vec_k, err_train,type="b",col="red",pch=20)
 legend("bottomright",lty=1,col=c("red","blue"),legend = c("train ", "test "))
 
 ```
+## Question 3 : Quelle conclusion en tirer ?
 
+En regardant uniquement l'erreur d'apprentissage, c'est le modèle le plus complexe qui est désigné, c'est-à-dire celui de $$k=1$$. Il s'agit du phénomène de sur-apprentissage. On veut vérifier que ce soit est adapté en regardant l'erreur de test (courbe bleue). Celle-ci pointe aussi le même modèle mais cette vérification confirme qu'ici le sur-apprentissage est le meilleur choix de méthode.
