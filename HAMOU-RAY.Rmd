@@ -65,7 +65,7 @@ boxplot(data[-c(2,3,178,179,192)])
 Interessons nous maintenant aux corrélations entre les variable, en faisant une étude bivariée du jeu de données.
 Pour cela calculons et affichons la matrice de corrélations.
 
-```{r fig.height=5}
+```{r fig.height=4}
 matrice_data=data.matrix(data)
 correlation_data=cor(matrice_data)
 ggcorr(matrice_data,nbreaks = 4, palette = "RdGy")
@@ -152,10 +152,7 @@ Y=1*(GENRE=="Jazz")
 
 
 Nous cherchons à déterminer un modèle logistique permettant de d'estimer les valeurs de la variable **Y**.
-Cette variable prend deux valeurs **0** et **1**.
-
-Nous cherchons à déterminer un modèle logistique permettant de d'estimer les valeurs de la variable **Y**.
-Cette variable prend deux valeurs **0** (s'il s'agit du genre classique) et **1** (s'il s'agit du genre jazz). C'est donc la variable binaire **Y** que nous cherchons à expliquer. Les valeurs des covariables $$x_i$$, qui représentent les autres paramètres, sont différentes pour chaque segment de morceau musical, on modélise l'expérience comme la réalisation de $$n=6447$$ variables aléatoires indépendantes de Bernouilli $$Z_i$$, de paramètre $$\pi(x_i) = \mathbb{P}(Z_i = 1|x_i)$$. Dans notre cas, on a donc $$Z_i \text{ ~ } \mathcal{B}(1,\pi(x_i))$$. Ici, une régression linéaire ne serait pas adaptée (à cause de la contrainte sur $$\pi$$). En revanche, on peut définir la fonction de lien *logit* telle que $$\text{logit}(\pi(x_i)) = \text{log}(\frac{\pi(x_i)}{1 - \pi(x_i)})$$. Notre modèle est alors tel que $$\text{logit}(\pi(x_i)) = x_i  \theta $$, régresseur linéaire des covariables.
+Cette variable prend deux valeurs **0** (s'il s'agit du genre classique) et **1** (s'il s'agit du genre jazz). C'est donc la variable binaire **Y** que nous cherchons à expliquer. Les valeurs des covariables $x_i$, qui représentent les autres paramètres, sont différentes pour chaque segment de morceau musical, on modélise l'expérience comme la réalisation de $n=6447$ variables aléatoires indépendantes de Bernouilli $Z_i$, de paramètre $\pi(x_i) = \mathbb{P}(Z_i = 1|x_i)$. Dans notre cas, on a donc $Z_i \text{ ~ } \mathcal{B}(1,\pi(x_i))$. Ici, une régression linéaire ne serait pas adaptée (à cause de la contrainte sur $\pi$). En revanche, on peut définir la fonction de lien *logit* telle que $$\text{logit}(\pi(x_i)) = \text{log}(\frac{\pi(x_i)}{1 - \pi(x_i)})$$. Notre modèle est alors tel que $$\text{logit}(\pi(x_i)) = x_i  \theta $$, régresseur linéaire des covariables.
 
 
 
@@ -190,7 +187,7 @@ Mod0=glm(Y_training~.,family=binomial,data=X_training[indices])
 summary(Mod0)
 par(mfrow=c(2,2)) 
 plot(Mod0)
-Mod0.predict=predict(Mod0, newdata=X_test[indices], type="response")
+Mod0.predict_test=predict(Mod0, newdata=X_test[indices], type="response")
 ```
 
 ### ModT
@@ -200,7 +197,7 @@ ModT=glm(Y_training~.,family=binomial,data=X_training)
 summary(ModT)
 par(mfrow=c(2,2))
 plot(ModT)
-ModT.predict=predict(ModT, newdata=X_test, type="response")
+ModT.predict_test=predict(ModT, newdata=X_test, type="response")
 ```
 
 ### Mod1
@@ -215,7 +212,7 @@ Mod1=glm(Y_training~.,family=binomial,data=X_training[indice_sign_5])
 summary(Mod1)
 par(mfrow=c(2,2))
 plot(Mod1)
-ModT.predict=predict(Mod1, newdata=X_test[indice_sign_5], type="response")
+Mod1.predict_test=predict(Mod1, newdata=X_test[indice_sign_5], type="response")
 ```
 
 ### Mod2 
@@ -229,10 +226,110 @@ Mod2=glm(Y_training~.,family=binomial,data=X_training[indice_sign_20])
 summary(Mod2)
 par(mfrow=c(2,2))
 plot(Mod2)
-ModT.predict=predict(Mod2, newdata=X_test[indice_sign_20], type="response")
+Mod2.predict_test=predict(Mod2, newdata=X_test[indice_sign_20], type="response")
 ```
 
 ### ModAIC
+
+**C'est peut etre mieux d'utiliser toutes les variabes du data frame**
+
+```{r warning=FALSE}
+library(MASS)
+ModAIC=stepAIC(ModT, direction = "both", trace = FALSE)
+
+summary(ModAIC)
+par(mfrow=c(2,2))
+plot(ModAIC)
+ModAIC.predict_test=predict(ModAIC, newdata=X_test, type="response")
+```
+
+
+
+
+## Question: 4
+
+Dans un premier temps, traçons la courbe ROC du modèle **ModT** ainsi que les courbes des règles aléatoires et parfaites.
+Pour cela on récupère la liste des prédictions du modèle sur les données de *training*, grace à la fonction **predict**. Et on les stock dans la variable **ModT.predict_training**. Pour rappel, on a généré les prédictions sur les données *test* dans la partie précédente.
+
+Ensuite on utilise la fonction **prediction** du package **ROCR** pour comparer nos prédictions aux valeurs réelles de **Y_test**.
+
+```{r fig.height=5, fig.width=5}
+ModT.predict_training=predict(ModT,type="response") #predition de ModT sur les données training
+library(ROCR)
+p_training=prediction(ModT.predict_training,Y_training)
+p_test=prediction(ModT.predict_test,Y_test)
+```
+
+On peut alors utiliser la fonction **performance** avec les attributs *sens* et *fpr* pour calculer la courbe de ROC des données training et test, et afficher le tout dans un graphique.
+On ajoute à ce graphique la règle aléatoire (première bissectrice) et la règle parfaite qui prédit 100% des vrais positifs et 0% des faux positif (segment $(0,0)-(0,1)$ et $(1,0)-(1,1)$)
+
+
+```{r fig.height=5, fig.width=5}
+#plot ROC des données training
+plot(performance(p_training,"sens","fpr"),col=2,lwd=3,add=FALSE)
+#plot ROC des données test
+plot(performance(p_test,"sens","fpr"),col=3,lwd=3,add=TRUE)
+# règle aléatoire
+lines(c(0,1),c(0,1),col=1,lty=1,lwd=2)      
+# règle parfaite
+segments(c(0,0),c(0,1),c(0,1),c(1,1),col=4,lty=4,lwd=2) 
+
+title("ROC sur les données de training \n et de test pour ModT")
+legend("bottomright", legend=c("ROC training", "ROC test", "Règle aléatoire", "Règle parfaite"), col=c(2,3,1,4), lty=c(1,1,1,2))
+```
+
+On remarque que les courbes ROC des données *training* et *test* se superposent. Donc le modèle se comportent de la même manière sur les données de *test* que sur les données de *training*. **//// EST CE QUE C'EST VRAI CA ?????? ////**
+
+
+Traçons maintenant les courbes ROC de tous les modèles de la question 3, pour des prédictions sur les données de test. Cela va nous permettre de comparer les modèles entre eux. On procède de la même manière que précédement pour généré les courbes ROC. Et on stock la sortie de la fonction **prediction** dans le variables **.ROC_pred_test**.
+Pour une raison de clarté on appel aussi la fonction sur ModT, même si on l'a déjà fait au début de cette question.
+
+```{r fig.height=5, fig.width=5}
+Mod0.ROC_pred_test=prediction(Mod0.predict_test,Y_test)
+ModT.ROC_pred_test=prediction(ModT.predict_test,Y_test)
+Mod1.ROC_pred_test=prediction(Mod1.predict_test,Y_test)
+Mod2.ROC_pred_test=prediction(Mod2.predict_test,Y_test)
+ModAIC.ROC_pred_test=prediction(ModAIC.predict_test,Y_test)
+```
+
+Pour pouvoir comparer les modèles entre eux il est plus pertinent de comparer les airessous les courbes ROC. Calculons donc ces aires pour nos cinq modèles. Pour ce faire on utilise la fonction **performance** avec l'attribut *auc*. On stock la sortie de cette fonction dans les variables **.perf_AUC**. La valeur de l'aire sous la courbe ROC se trouve alors dans l'attribut *y.values* de ces variable (qui est une liste). On arrondi cette valeur à 3 décimales, et on la stock dans les variables **.AUC**.
+
+```{r fig.height=5, fig.width=5}
+Mod0.perf_AUC = performance(Mod0.ROC_pred_test, "auc")
+ModT.perf_AUC = performance(ModT.ROC_pred_test, "auc")
+Mod1.perf_AUC = performance(Mod1.ROC_pred_test, "auc")
+Mod2.perf_AUC = performance(Mod2.ROC_pred_test, "auc")
+ModAIC.perf_AUC = performance(ModAIC.ROC_pred_test, "auc")
+
+#Recuperation valeur aire
+Mod0.AUC=round(Mod0.perf_AUC@y.values[[1]],3) 
+ModT.AUC=round(ModT.perf_AUC@y.values[[1]],3) 
+Mod1.AUC=round(Mod1.perf_AUC@y.values[[1]],3) 
+Mod2.AUC=round(Mod2.perf_AUC@y.values[[1]],3) 
+ModAIC.AUC=round(ModAIC.perf_AUC@y.values[[1]],3)
+```
+
+On peut alors tracer un graphique contenant les ROC de nos cinq modèles. On affiche la valeur de l'aire sous la courbe de ROC de chaque modèle dans la légende. 
+```{r fig.height=5, fig.width=5}
+#Plot tous les ROC
+plot(performance(Mod0.ROC_pred_test,"sens","fpr"),col=2,lwd=3,add=FALSE)
+plot(performance(ModT.ROC_pred_test,"sens","fpr"),col=3,lwd=3,lty=1,add=TRUE)
+plot(performance(Mod1.ROC_pred_test,"sens","fpr"),col=4,lwd=3,lty=2,add=TRUE)
+plot(performance(Mod2.ROC_pred_test,"sens","fpr"),col=5,lwd=3,lty=3,add=TRUE)
+plot(performance(ModAIC.ROC_pred_test,"sens","fpr"),col=6,lwd=3,lty=4,add=TRUE)
+lines(c(0,1),c(0,1),col=1,lty=1,lwd=1)
+
+
+#Titre et legende avec valeur aire
+title("ROC sur les données de test")
+legend("bottomright", 
+       legend=c(paste("Mod0: ", Mod0.AUC),
+                paste("ModT: ", ModT.AUC),
+                paste("Mod1: ", Mod1.AUC), 
+                paste("Mod2: ", Mod2.AUC), 
+                paste("ModAIC: ", ModAIC.AUC)), 
+       col=c(2,3,4,5,6), lty=c(1,1,2,3,4))
+```
 
 
 
