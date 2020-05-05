@@ -366,9 +366,8 @@ K # c'est toujours le cas où k=1 qui minimise le taux d'erreur de test
 err_test[(-1)]
 vec_k = 1:200
 plot(vec_k, err_test, type="b", col="blue", xlab="nombre de voisins",ylab=" erreurs train et test", pch=20, 
-     ylim=range(c(err_test, err_train)))
-# erreur d'apprentissage
-lines(vec_k, err_train,type="b",col="red",pch=20)
+     ylim=range(c(err_test, err_train))) +
+lines(vec_k, err_train,type="b",col="red",pch=20) +
 legend("bottomright",lty=1,col=c("red","blue"),legend = c("train ", "test "))
 
 ```
