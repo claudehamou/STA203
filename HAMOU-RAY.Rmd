@@ -154,8 +154,8 @@ Y=1*(GENRE=="Jazz")
 Nous cherchons à déterminer un modèle logistique permettant de d'estimer les valeurs de la variable **Y**.
 Cette variable prend deux valeurs **0** et **1**.
 
-**MODELE BERNOULLI...**
-**A ECRIRE**
+Nous cherchons à déterminer un modèle logistique permettant de d'estimer les valeurs de la variable **Y**.
+Cette variable prend deux valeurs **0** (s'il s'agit du genre classique) et **1** (s'il s'agit du genre jazz). C'est donc la variable binaire **Y** que nous cherchons à expliquer. Les valeurs des covariables $$x_i$$, qui représentent les autres paramètres, sont différentes pour chaque segment de morceau musical, on modélise l'expérience comme la réalisation de $$n=6447$$ variables aléatoires indépendantes de Bernouilli $$Z_i$$, de paramètre $$\pi(x_i) = \mathbb{P}(Z_i = 1|x_i)$$. Dans notre cas, on a donc $$Z_i \text{ ~ } \mathcal{B}(1,\pi(x_i))$$. Ici, une régression linéaire ne serait pas adaptée (à cause de la contrainte sur $$\pi$$). En revanche, on peut définir la fonction de lien *logit* telle que $$\text{logit}(\pi(x_i)) = \text{log}(\frac{\pi(x_i)}{1 - \pi(x_i)})$$. Notre modèle est alors tel que $$\text{logit}(\pi(x_i)) = x_i  \theta $$, régresseur linéaire des covariables.
 
 
 
