@@ -1,7 +1,7 @@
 ---
-title: "Projet STA203"
+title: "Projet STA203 : étude d'un jeu de données musical"
 author: "Hamou Claude, Ray Loic"
-date: "25/04/2020"
+date: "08/05/2020"
 output: pdf_document
 ---
 
@@ -15,7 +15,9 @@ library(caret)
 
 
 
-Dans ce projet nous allons étudier un jeu de données musical. Ce jeu de données contient 191 variable quantitatives et 1 variables qualitative qui représente le genre de musique. Nous allons implémenter 3 méthodes permettant de prédire la variable de genre à partir des autres variables.
+Dans ce projet nous allons étudier un jeu de données musical. Ce jeu de données contient 191 variable quantitatives et 1 variables qualitative qui représente le genre de musique. 
+
+Nous allons implémenter 3 méthodes permettant de prédire la variable de genre à partir des autres variables. Il s'agira des méthodes de régression logistique, des k plus proches voisins, et de régression ridge.
 Commençons donc par importer le jeu de données.
 ```{r}
 data=read.table("Music.txt", header = TRUE, sep=";")
@@ -30,27 +32,27 @@ nrow(data) #nombre d'observation
 
 ## Question 1
 
-Il y a trop de variables pour pouvoir extraire des informations en regardant les données bruts.
+Il y a trop de variables pour pouvoir extraire des informations en regardant les données brutes.
 Mais on peut toutefois faire des analyses univariée et bivariée sur quelques variables.
 
-Regardons tout d'abord le nombre d'individu de chaque classe.
+Regardons tout d'abord le nombre d'individus de chaque classe.
 ```{r}
 summary(data[192]) #nombre de d'individu de chaque groupes
 ```
-On peut déjà remarquer que le jeu de données est relativement équilibrés, ce qui nous permet de faire une étude qui ne soit pas trop biaisée.
+On peut déjà remarquer que le jeu de données est relativement équilibré, ce qui nous permet de faire une étude qui ne soit pas trop biaisée.
 
 Faisons une analyse univariée, sans considérer la variable qualitative 192.
 ```{r fig.height=4, fig.width=10}
 boxplot(data[-192])
 ```
-Cela ne ce voit pas bien sur le graphique mais les variables 3 **PAR_SC_V** , et 179 **PAR_PEAK_RMS10FR_VAR** prennent des valeurs bien plus élevées que les autres variables. On peut notamment remarquer que ces deux variables ont des variances élevées (du fait de la répartions des points au dessus de leur boites)
+Cela ne se voit pas bien sur le graphique mais les variables 3 **PAR_SC_V** , et 179 **PAR_PEAK_RMS10FR_VAR** prennent des valeurs bien plus élevées que les autres variables. On peut notamment remarquer que ces deux variables ont des variances élevées (du fait de la répartions des points au dessus de leur boite)
 Affichons un nouveau boxplot sans prendre en compte ces variables.
 
 ```{r fig.height=4, fig.width=10}
 boxplot(data[-c(3,179,192)])
 #boxplot((data[c(-3,-179,-192)])[2:10])
 ```
-Nous voyons ici que les variables et 2 **PAR_SC** et 178 **PAR_PEAK_RMS10FR_MEAN** prennent elles aussi des valeurs bien supérieures aux autres variables, avec là encore une grande variance entre les valeurs. Par ailleurs cela n'est pas étonnant car ces variables et les variables précédentes sont reliées. En effet les variables que nous avons ici représente des moyennes, et les variables précédetent représentaient la variance associée. 
+Nous voyons ici que les variables et 2 **PAR_SC** et 178 **PAR_PEAK_RMS10FR_MEAN** prennent elles aussi des valeurs bien supérieures aux autres variables, avec là encore une grande variance entre les valeurs. Par ailleurs cela n'est pas étonnant car ces variables et les variables précédentes sont reliées. En effet les variables que nous avons ici représentent des moyennes, et les variables précédentes représentaient la variance associée. 
 
 Faisons un dernier boxplot sans ces variables.  
 
@@ -71,7 +73,7 @@ correlation_data=cor(matrice_data)
 ggcorr(matrice_data,nbreaks = 4, palette = "RdGy")
 #corrplot(correlation_data, tl.pos='n')
 ```
-Comme cela était attendu, le graphique est quasiment illisible. Mais on parvient tout de même à diserner des zones de forte covariance.
+Comme cela était attendu, le graphique est quasiment illisible. Mais on parvient tout de même à discerner des zones de forte covariance.
 Implementons une fonction qui affiche les variables dont la covariance est comprise entre 2 bornes, afin de retirer des informations plus pertinentes de la matrice de corrélation.
 ```{r}
 print_corr_borne= function(mat_cor,seuil_min,seuil_max){
@@ -108,7 +110,7 @@ On remarque donc que les variables très corrélées sont de type *MFCCV* et *MF
 
 
 
-Considérons les variables 128 à 147 et 148 à 167. En regardant le jeu de données et son déscriptif, il semblerait que ces deux groupes de variables soient égaux.
+Considérons les variables 128 à 147 et 148 à 167. En regardant le jeu de données et son descriptif, il semblerait que ces deux groupes de variables soient égaux.
 Pour le confirmer on écrit un script qui renvoie le nombre de différence entre ces 2 groupes.
 
 ```{r}
@@ -159,7 +161,7 @@ Cette variable prend deux valeurs **0** (s'il s'agit du genre classique) et **1*
 
 ## Question 2
 
-On utilise le code proposé pour générer des data-frame de *training* permettant de fitter le modèle et des data-frame de *test*.
+On utilise le code proposé pour générer des data-frames de *training* permettant de fitter le modèle et des data-frames de *test*.
 
 ```{r}
 set.seed(103)
@@ -249,7 +251,7 @@ ModAIC.predict_test=predict(ModAIC, newdata=X_test, type="response")
 ## Question: 4
 
 Dans un premier temps, traçons la courbe ROC du modèle **ModT** ainsi que les courbes des règles aléatoires et parfaites.
-Pour cela on récupère la liste des prédictions du modèle sur les données de *training*, grace à la fonction **predict**. Et on les stock dans la variable **ModT.predict_training**. Pour rappel, on a généré les prédictions sur les données *test* dans la partie précédente.
+Pour cela on récupère la liste des prédictions du modèle sur les données de *training*, grace à la fonction **predict**. Et on les stocke dans la variable **ModT.predict_training**. Pour rappel, on a généré les prédictions sur les données *test* dans la partie précédente.
 
 Ensuite on utilise la fonction **prediction** du package **ROCR** pour comparer nos prédictions aux valeurs réelles de **Y_test**.
 
@@ -278,7 +280,7 @@ title("ROC sur les données de training \n et de test pour ModT")
 legend("bottomright", legend=c("ROC training", "ROC test", "Règle aléatoire", "Règle parfaite"), col=c(2,3,1,4), lty=c(1,1,1,2))
 ```
 
-On remarque que les courbes ROC des données *training* et *test* se superposent. Donc le modèle se comportent de la même manière sur les données de *test* que sur les données de *training*. **//// EST CE QUE C'EST VRAI CA ?????? ////**
+On remarque que les courbes ROC des données *training* et *test* se superposent. Donc le modèle se comporte de la même manière sur les données de *test* que sur les données de *training*. **//// EST CE QUE C'EST VRAI CA ?????? ////**
 
 
 Traçons maintenant les courbes ROC de tous les modèles de la question 3, pour des prédictions sur les données de test. Cela va nous permettre de comparer les modèles entre eux. On procède de la même manière que précédement pour généré les courbes ROC. Et on stock la sortie de la fonction **prediction** dans le variables **.ROC_pred_test**.
