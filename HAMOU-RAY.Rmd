@@ -242,6 +242,10 @@ ModT.predict=predict(Mod2, newdata=X_test[indice_sign_20], type="response")
 
 ## Question 1: K-NN
 
+La méthode des k plus proches voisins (knn ou k nearest neighbours) est une méthode simple à utiliser dans des cas de classification ou régression. Il s'agit d'une méthode non paramétrique dans laquelle le modèle mémorise les observations de l'ensemble d'apprentissage et s'en sert pour les observations des données de test. Elle consiste à fixer un nombre k de voisins des nouvelles données d'entrée, de séléctionner les k plus proches (en fonction d'une certaine distance, la distance euclidienne par exemple) et de conserver la classe correspondant à celle majoritairement représentée parmi les différents voisins retenus.
+
+Pour choisir le meilleur k, il faut tester différentes valeurs et retenir celle qui minimise le taux d'erreur de l'ensemble de test.
+
 ## Question 2: Implémentation K-NN
 
 ```{r}
