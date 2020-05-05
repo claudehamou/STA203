@@ -353,8 +353,8 @@ pred_knn_test <-knn(X_training,X_test, Y_training, k=1) # tout d'abord on teste 
 summary(pred_knn_test)
 err_test_1=sum(pred_knn_test!=Y_test)/length(Y_test)
 
-err_test = rep(NA,length=150)
-err_train = rep(NA, length=150)
+err_test = rep(NA,length=200)
+err_train = rep(NA, length=200)
 for (k in 1:200){
   mod_train <-knn(X_training,X_training,Y_training,k=k)
   pred_knn <-knn(X_training,X_test, Y_training, k=k)
