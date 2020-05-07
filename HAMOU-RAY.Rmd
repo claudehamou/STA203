@@ -56,7 +56,6 @@ Nous voyons ici que les variables et 2 **PAR_SC** et 178 **PAR_PEAK_RMS10FR_MEAN
 
 Faisons un dernier boxplot sans ces variables.  
 
-**ON POURRAIT FAIRE UN TRUC MIEUX EN ECRIVANT UNE FONCTION QUI RENVOIE LE NOMS DE TOUTES LES VARIAVLES QUI PRENNENT DES VALEURS SUPERIEURES A UNE CONSTANT GENRE 1**
 
 ```{r fig.height=4, fig.width=10}
 boxplot(data[-c(2,3,178,179,192)])
@@ -282,7 +281,7 @@ legend("bottomright",
        col=c(2,3,1,4), lty=c(1,1,1,2))
 ```
 
-On remarque que les courbes ROC des données *training* et *test* se superposent. Donc le modèle se comporte de la même manière sur les données de *test* que sur les données de *training*. **//// EST CE QUE C'EST VRAI CA ?????? ////**
+On remarque que les courbes ROC des données *training* et *test* se superposent. Donc le modèle se comporte de la même manière sur les données de *test* que sur les données de *training*. 
 
 
 Traçons maintenant les courbes ROC de tous les modèles de la question 3, pour des prédictions sur les données de test. Cela va nous permettre de comparer les modèles entre eux. On procède de la même manière que précédement pour généré les courbes ROC. Et on stock la sortie de la fonction **prediction** dans le variables **.ROC_pred_test**.
@@ -335,8 +334,77 @@ legend("bottomright",
        col=c(2,3,4,5,6), lty=c(1,1,2,3,4))
 ```
 
+On peut remarquer que les trois derniers modèles se superposent et que par conséquent leur aires sont extrement proche. Il est donc difficile à ce stade de dire quel est le meilleur modèle.
+
+## Question 5
+
+Cherchons maintenant quel est le meilleur modèle parmi ceux calculer précédement.
+
+On commence par le regarder l'erreur quadratique moyenne de prévision de chaque modèle sur les données de **training**. 
+Les prédictions sur les données d'entrainement sont contenues dans l'attribut **fitted.values**
+```{r}
+#Erreur 
+mean((Y_training-Mod0$fitted.values)^2)
+mean((Y_training-ModT$fitted.values)^2)
+mean((Y_training-Mod1$fitted.values)^2)
+mean((Y_training-Mod2$fitted.values)^2)
+mean((Y_training-ModAIC$fitted.values)^2)
+```
+
+Regardons aussi l'erreur de classification des modèles. Les modèles étant des fonctionS logistiqueS, ils renvoient donc des prédictions continuent dans $\big]0,1\big[$. On seuil les prédiction à *0.5*.
+
+```{r}
+#prediction seuillee
+Mod0.class_train=ifelse(Mod0$fitted.values>0.5,1,0)  
+ModT.class_train=ifelse(ModT$fitted.values>0.5,1,0)
+Mod1.class_train=ifelse(Mod1$fitted.values>0.5,1,0)
+Mod2.class_train=ifelse(Mod2$fitted.values>0.5,1,0)
+ModAIC.class_train=ifelse(ModAIC$fitted.values>0.5,1,0)
+
+#Erreur de classification
+mean(Mod0.class_train!=Y_training)
+mean(ModT.class_train!=Y_training)
+mean(Mod1.class_train!=Y_training)
+mean(Mod2.class_train!=Y_training)
+mean(ModAIC.class_train!=Y_training)
+```
+Considèrons ensuite ces mêmes erreurs sur les prédiction de **test**.
+```{r}
+#Erreur 
+mean((Y_test-Mod0.predict_test)^2)
+mean((Y_test-ModT.predict_test)^2)
+mean((Y_test-Mod1.predict_test)^2)
+mean((Y_test-Mod2.predict_test)^2)
+mean((Y_test-ModAIC.predict_test)^2)
+
+#prediction seuillée
+Mod0.class_test=ifelse(Mod0.predict_test>0.5,1,0)  
+ModT.class_test=ifelse(ModT.predict_test>0.5,1,0)
+Mod1.class_test=ifelse(Mod1.predict_test>0.5,1,0)
+Mod2.class_test=ifelse(Mod2.predict_test>0.5,1,0)
+ModAIC.class_test=ifelse(ModAIC.predict_test>0.5,1,0)
 
 
+mean(Mod0.class_test!=Y_test)
+mean(ModT.class_test!=Y_test)
+mean(Mod1.class_test!=Y_test)
+mean(Mod2.class_test!=Y_test)
+mean(ModAIC.class_test!=Y_test)
+```
+
+Le modèle qui minimise toutes ces erreurs est le modèle **ModT**. Toutefois les valeurs des modèles **Mod2**, et **ModAIC** sont encore très proches des valeurs de **ModT**. Regardons donc l'AIC pour trancher entre ces modèles.
+
+```{r}
+Mod0$aic
+ModT$aic
+Mod1$aic
+Mod2$aic
+ModAIC$aic
+```
+
+**ModAIC** minimise l'AIC, nous choissons donc ce modèle parmi ceux que nous avons présenté.
+
+Nos données étant individuelles, nous pouvons faire un test d'adéquation, en utilisant le *test de Hosmer et Lemeshow*.
 
 
 # Partie 2: K plus proches voisins (K-NN)
@@ -404,7 +472,7 @@ Dans le cadre du modèle binomial qui est le nôtre, la régression ridge est un
 
 ## Question 2 
 
-Les deux cas extrêmes représentent les valeurs extrêmes pour $$\lambda$$ qui permet la pénalisation. Pour un $$\lambda$$ élevé comme $$10^{10}$$, le critère est fortement pénalisé, on se rapproche du cas i.i.d. Pour un $$\lambda$$ faible comme $$10^{-2}$$ on est dans le cas inverse où le critère est peu pénalisé, ce qui correspond presque à une régression logistique habituelle.
+Les deux cas extrêmes représentent les valeurs extrêmes pour $\lambda$ qui permet la pénalisation. Pour un $\lambda$ élevé comme $10^{10}$, le critère est fortement pénalisé, on se rapproche du cas i.i.d. Pour un $\lambda$ faible comme $10^{-2}$ on est dans le cas inverse où le critère est peu pénalisé, ce qui correspond presque à une régression logistique habituelle.
 
 ```{r}
 library(glmnet)
@@ -467,11 +535,50 @@ plot(performance(prediction(ridge_pred_bestl,Y_test),"sens","fpr"),col=2,lwd=3,l
 title("ROC sur les modèles ridge")
 legend("bottomright", 
        legend=c("ROC Modèle contenant toutes les variables",
-                "ROC Modèle contenant les variables selection en Partie 1"),
+                "ROC Modèle contenant les variables selectionnées en Partie 1"),
        col=c(3,2), lty=c(1,1))
 ```
 
+La régression ridge maximisant l'aire sous la courbe est celle contenant toutes les variables, nous allons donc choisir ce modèle. Toutefois, il faut noter que les valeurs de la prédiction ne sont pas entre 0 et 1.
+
+
+
 # Conclusion
+
+Comparons les 3 modèles selectionnés dans les partie précedentes. Pour rappel les modèles selectionnés sont:
+
+- Partie 1: **ModAIC**
+- Partie 2: **K-nn avec K=1**
+- Partie 3: **Ridge sur toutes les variables ridge_all_pred_bestl**
+
+Cherchons le modèle dont l'erreur est la plus faible.
+Commençons par l'erreur quadratique sur les données de test.
+```{r}
+mean((Y_test-ModAIC.predict_test)^2)
+mean((Y_test-ridge_all_pred_bestl)^2)
+```
+On remarque que l'erreur de la regression ridge est très élevée, cela est du au fait que les valeurs des prédictions ne sont pas entre 0 et 1.
+
+Seuillons les données à $0.5$ et comparons les erreurs de classifications, ainsi que les matrices de confusions.
+
+```{r}
+mean(ModAIC.class_test!=Y_test)
+mean(pred_knn_test!=Y_test)
+mean(ifelse(ridge_all_pred_bestl>0.5,1,0)!=Y_test)
+```
+
+```{r}
+table(ModAIC.class_test,Y_test)
+table(pred_knn_test,Y_test)
+table(ifelse(ridge_all_pred_bestl>0.5,1,0),Y_test)
+```
+
+Le modèle avec la plus faible erreur de classification est donc le modèle ridge contenant toutes les variables du jeux de données. On remarque qu'il est principalement sensible aux faux positifs.
+
+Pour tester la performance de généralisation du modèle il aurait fallu disiser notre jeu de données en 3 parties (aprentissage, validation, test) avant de faire les analyses. Ici notre échantillons a été utilisé comme un échantillon de validation, il n'est donc pas possible de procèder à un test de performance de généralisation telquel. Mais on peut toutefois utiliser l' estimation de la performance sur échantillon indépendant (partie 10.2.4) pour générer un estimateur de l'erreur quadratique moyenne de prédiction.
+```{r}
+mean((Y_test-ifelse(ridge_all_pred_bestl>0.5,1,0))^2)
+```
 
 On aurait pu aussi essayer d'autres méthodes de classification comme celle des forêts aléatoires ou des arbres CART.
 
@@ -512,11 +619,11 @@ table(foret_predict, GENRE_test)
 ```
 
 
-## Erreur de test
+## Erreur de classification des données de test
 Regradons l'erreur moyenne sur les données de prédictions de ces deux méthodes.
 ```{r}
 mean(arbre_predict!=GENRE_test)
 mean(foret_predict!=GENRE_test)
 ```
 
-**COMPARER AUX AUTRES MODELES**
+On remarque donc que la méthode de forêt aléatoire permet d'avoir une meilleur classification sur notre jeu de données que la méthode ridge. Même si les résultats restent proches.
