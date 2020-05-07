@@ -349,6 +349,7 @@ Pour choisir le meilleur k, il faut tester différentes valeurs et retenir celle
 
 ## Question 2: Implémentation K-NN
 
+En premier lieu on effectue la méthode pour $$K=1$$ voisin.
 ```{r}
 library(class)
 pred_knn_test <-knn(X_training,X_test, Y_training, k=1) # tout d'abord on teste avec k=1
@@ -356,6 +357,7 @@ summary(pred_knn_test)
 err_test_1=sum(pred_knn_test!=Y_test)/length(Y_test)
      
 ```
+On fait maintenant une boucle qui permet de calculer cette méthode pour $$k$$ allant de 1 à 200 voisins et on retient à chaque fois les erreurs d'apprentissage et d'entraînement.
 
 ```{r eval=FALSE, include=TRUE}
 err_test = rep(NA,length=150)
@@ -372,8 +374,8 @@ save(err_test,file = "err_test_sta203.RData")
 save(err_train,file = "err_train_sta203.RData")
 ```
 
-Pour ne pas avoir à faire le calcul lors de la compilation du rapport, nous avons enregistrer les données.
-
+Pour ne pas avoir à faire le calcul lors de la compilation du rapport, nous avons enregistré les données.
+On affiche maintenant la courbe des deux erreurs en fonction du nombre de voisins retenus.
 ```{r}
 
 load("mod_train_sta203.RData")
@@ -398,13 +400,11 @@ En regardant uniquement l'erreur d'apprentissage, c'est le modèle le plus compl
 
 ## Question 1: Interêt de la régression ridge
 
-La régression ridge est un type de régression pénalisée....
-
-
+Dans le cadre du modèle binomial qui est le nôtre, la régression ridge est un type de régression logistique pénalisée, qui correspond donc à l'optimisation d'un critère. L'ajustement des paramètres de pénalisation permet de choisir un modèle plus performant qu'une "simple" régression logistique.
 
 ## Question 2 
 
-**A quoi s'apparentent ces deux cas extrêmes?**
+Les deux cas extrêmes représentent les valeurs extrêmes pour $$\lambda$$ qui permet la pénalisation. Pour un $$\lambda$$ élevé comme $$10^{2}$$, le critère est fortement pénalisé, on se rapproche du cas i.i.d. Pour un $$\lambda$$ faible comme $$10^{-2}$$ on est dans le cas inverse où le critère est peu pénalisé, ce qui correspond presque à une régression logistique habituelle.
 
 ```{r}
 library(glmnet)
@@ -470,3 +470,7 @@ legend("bottomright",
                 "ROC Modèle contenant les variables selection en Partie 1"),
        col=c(3,2), lty=c(1,1))
 ```
+
+# Conclusion
+
+On aurait pu aussi essayer d'autres méthodes de classification comme celle des forêts aléatoires ou des arbres CART.
