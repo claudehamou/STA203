@@ -404,7 +404,7 @@ Dans le cadre du modèle binomial qui est le nôtre, la régression ridge est un
 
 ## Question 2 
 
-Les deux cas extrêmes représentent les valeurs extrêmes pour $$\lambda$$ qui permet la pénalisation. Pour un $$\lambda$$ élevé comme $$10^{2}$$, le critère est fortement pénalisé, on se rapproche du cas i.i.d. Pour un $$\lambda$$ faible comme $$10^{-2}$$ on est dans le cas inverse où le critère est peu pénalisé, ce qui correspond presque à une régression logistique habituelle.
+Les deux cas extrêmes représentent les valeurs extrêmes pour $$\lambda$$ qui permet la pénalisation. Pour un $$\lambda$$ élevé comme $$10^{10}$$, le critère est fortement pénalisé, on se rapproche du cas i.i.d. Pour un $$\lambda$$ faible comme $$10^{-2}$$ on est dans le cas inverse où le critère est peu pénalisé, ce qui correspond presque à une régression logistique habituelle.
 
 ```{r}
 library(glmnet)
@@ -474,3 +474,49 @@ legend("bottomright",
 # Conclusion
 
 On aurait pu aussi essayer d'autres méthodes de classification comme celle des forêts aléatoires ou des arbres CART.
+
+
+# Bonus
+
+Implémentons un arbre de décision et une forêt aléatoire.
+
+## Arbre de décision
+
+Commençons par un arbre décision élagué.
+```{r}
+library(rpart)
+library(rpart.plot)
+arbre = rpart(GENRE_training~., data=X_training)
+arbre$cptable
+arbre = prune(arbre, cp = arbre$cptable[which.min(arbre$cptable[,"xerror"]),"CP"])
+rpart.plot(arbre)
+```
+
+La prédiction sur les données de test nous donne:
+
+```{r}
+arbre_predict = predict(arbre, X_test,type="class")
+table(arbre_predict, GENRE_test)
+```
+
+
+## Forêt aléatoire
+
+Implémentons maintenant une forêt aléatoire de 50 arbres.
+```{r}
+library(randomForest)
+foret=randomForest(GENRE_training~.,data=X_training, ntree = 50, 
+                   mtry = 2, na.action = na.roughfix)
+foret_predict = predict(foret, X_test, type="class")
+table(foret_predict, GENRE_test)
+```
+
+
+## Erreur de test
+Regradons l'erreur moyenne sur les données de prédictions de ces deux méthodes.
+```{r}
+mean(arbre_predict!=GENRE_test)
+mean(foret_predict!=GENRE_test)
+```
+
+**COMPARER AUX AUTRES MODELES**
